@@ -90,6 +90,7 @@
           <!-- @contextmenu.prevent="editLine($event, rowItem)" editRowTask-->
           <div
             class="time-line"
+            :class="{ even: index2 % 2 == 1 }"
             @mouseup="udown"
             @mousedown="moveContent($event, rowItem, index1, index2)"
             @contextmenu.prevent.stop="() => {}"
@@ -118,6 +119,7 @@
         left: `${contextmenuLeft + 5}px`,
       }"
     >
+      <el-link type="primary" @click="addTaskLine">增加进度</el-link><br />
       <el-link type="primary" @click="removeTaskRow">删除任务</el-link><br />
     </div>
     <daily-task-detail
@@ -125,6 +127,10 @@
       :daily="daily"
       :chartsdata="chartsdata"
     ></daily-task-detail>
+    <add-time-line-remark
+      @addLineToCurrentTask="addLineToCurrentTask"
+      ref="AddTimeLineRemark"
+    ></add-time-line-remark>
   </div>
 </template>
 
@@ -134,6 +140,9 @@
 
 import { format } from "@/utils/utils.js";
 import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
+
+import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
+
 // const time = new Date().toISOString().slice(0, 10);
 const timeLength = 9 * 60 * 60 * 1000; //总时长的毫秒数S
 const errorTime = 1000 * 60; //由于js小数位的计算误差，暂设1分钟的时间处理误差
@@ -148,6 +157,7 @@ export default {
   },
   components: {
     DailyTaskDetail,
+    AddTimeLineRemark,
   },
   watch: {
     daily(value) {
@@ -182,16 +192,30 @@ export default {
       index_1: 0,
       index_2: 0,
       directive: 0,
+      exTime: (60 * 60 * 1000) / 2, //任务的最小时间差
       chartsdata: [
         {
           product:
             "今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务",
           list: [
             {
-              pre_package_time: this.daily + " 9:00:00",
+              pre_package_time: this.daily + " 09:00:00",
               pre_release_time: this.daily + " 10:00:00",
               remark:
                 "优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比",
+            },
+            {
+              pre_package_time: this.daily + " 10:30:00",
+              pre_release_time: this.daily + " 11:30:00",
+              id: 4,
+              remark:
+                "112233441122334411223344112233441122334411223344112233441122334411223344112233441122334411223344",
+            },
+            {
+              pre_package_time: this.daily + " 13:30:00",
+              pre_release_time: this.daily + " 17:30:00",
+              id: 5,
+              remark: "xxxx Test",
             },
           ],
         },
@@ -199,7 +223,7 @@ export default {
           product: "今天的第二个任务",
           list: [
             {
-              pre_package_time: this.daily + " 9:30:00",
+              pre_package_time: this.daily + " 09:30:00",
               pre_release_time: this.daily + " 18:00:00",
               remark: "修复xxxx bug",
             },
@@ -211,14 +235,28 @@ export default {
       contextmenuTop: 0,
       contextmenuLeft: 0,
       editTaskRowShow: false,
+      currentSelectTimeList: [],
+      addLineToIndex: 0,
     };
   },
   mounted() {
     this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
-    console.log(this.lineComponentWidth, 123);
+    setTimeout(() => {
+      //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
+      this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
+    }, 300);
+
     window.onresize = () => {
       this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
     };
+  },
+  computed: {
+    ableSelectTimeList() {
+      let arr = this.currentSelectTimeList.filter((item1, index) => {
+        return index % 2 == 0;
+      });
+      return arr;
+    },
   },
   methods: {
     openTaskDetail() {
@@ -231,7 +269,7 @@ export default {
       this.editTaskRowShow = false;
     },
 
-    editRowTask(event, data, index){
+    editRowTask(event, data, index) {
       this.currentTask = data;
       this.currentTaskIndex = index;
       this.contextmenuTop =
@@ -244,11 +282,60 @@ export default {
       this.editTaskRowShow = false;
     },
 
-    removeTaskRow(){
+    removeTaskRow() {
       this.editTaskRowShow = false;
       this.chartsdata.splice(this.currentTaskIndex, 1);
     },
 
+    //增加进度
+    addTaskLine() {
+      let arr = [];
+      this.currentSelectTimeList = [];
+      arr.push(this.daily + " 09:00:00");
+      for (let i = 0; i < this.currentTask.list.length; i++) {
+        arr.push(this.currentTask.list[i].pre_package_time);
+        arr.push(this.currentTask.list[i].pre_release_time);
+      }
+      arr.push(this.daily + " 18:00:00");
+      for (let j = 0; j < arr.length - 1; j++) {
+        this.currentSelectTimeList.push([arr[j], arr[j + 1]]);
+      }
+      this.editTaskRowShow = false;
+      let time =
+        Math.floor(
+          (this.contextmenuLeft / this.lineComponentWidth) * timeLength
+        ) + new Date(this.daily + " 09:00:00").getTime();
+      console.log(time);
+      this.addTaskLimit(time);
+    },
+
+    addTaskLimit(time) {
+      console.log(this.ableSelectTimeList);
+      let arr = [];
+      for (let i = 0; i < this.ableSelectTimeList.length; i++) {
+        let st = new Date(this.ableSelectTimeList[i][0]).getTime();
+        let et = new Date(this.ableSelectTimeList[i][1]).getTime();
+        if (time >= st && time + this.exTime <= et) {
+          console.log(11111);
+          this.addLineToIndex = i;
+          arr[0] = time;
+          arr[1] = time + this.exTime;
+          break;
+        }
+      }
+      if (arr.length) {
+        this.$refs.AddTimeLineRemark.show(arr);
+      } else {
+        this.$message.error("请合理安排时间");
+      }
+    },
+
+    addLineToCurrentTask(data) {
+      console.log(this.addLineToIndex);
+      this.currentTask.list.splice(this.addLineToIndex, 0, data);
+    },
+
+    //编辑进度
     editLine(event, data) {
       let { pre_package_time, pre_release_time, remark } = data;
       this.rowItemData = data;
@@ -265,7 +352,7 @@ export default {
     addTask(task) {
       this.chartsdata.push(task);
       setTimeout(() => {
-        //滚动条出现时需要重新计算宽度，暂没有找到合适方式监视滚动条消失出现
+        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
         this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
       }, 300);
     },
@@ -291,7 +378,7 @@ export default {
       let left =
         Math.floor(
           ((new Date(item.pre_package_time) -
-            new Date(this.daily + " :9:00:00")) *
+            new Date(this.daily + " 09:00:00")) *
             this.lineComponentWidth) /
             timeLength
         ) + "px";
@@ -369,14 +456,14 @@ export default {
       let data = this.chartsdata[this.index_1].list;
       let compareIndex = this.index_2 + this.directive;
       let maxIndex = this.chartsdata[this.index_1].list.length - 1;
-      let exTime = (60 * 60 * 1000) / 2; //这里可以设置最小时间半小时60*60*1000/2
+      let exTime = this.exTime; //这里可以设置最小时间半小时60*60*1000/2
 
       if (this.directive < 0) {
         lint2 =
           new Date(data[this.index_2].pre_release_time).getTime() - exTime;
 
         if (compareIndex < 0) {
-          lint1 = new Date(this.daily + " 9:00:00").getTime();
+          lint1 = new Date(this.daily + " 09:00:00").getTime();
         } else {
           lint1 = new Date(data[compareIndex].pre_release_time).getTime();
         }
@@ -436,7 +523,7 @@ export default {
       let pre_package_time = new Date(data.pre_package_time).getTime();
       let pre_release_time = new Date(data.pre_release_time).getTime();
       if (prevIndex < 0) {
-        prevLint = new Date(this.daily + " 9:00:00").getTime();
+        prevLint = new Date(this.daily + " 09:00:00").getTime();
       } else {
         prevLint = new Date(compareData[prevIndex].pre_release_time).getTime();
       }
@@ -526,6 +613,7 @@ export default {
       padding: 10px;
       text-align: left;
       font-size: 14px;
+      pointer-events: none;
     }
 
     &.active {
@@ -557,6 +645,12 @@ export default {
           position: absolute;
           top: 30px;
           pointer-events: none;
+        }
+
+        &.even {
+          .start-time, .end-time {
+            top: -15px;
+          }
         }
 
         .start-time {
