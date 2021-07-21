@@ -8,47 +8,47 @@
     <div class="line-wrap-all-x">
       <div class="line-x-content">
         <div class="line-x">
-          <span>09:00</span>
+          <span>09:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>10:00</span>
+          <span>10:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>11:00</span>
+          <span>11:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>12:00</span>
+          <span>12:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>13:00</span>
+          <span>13:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>14:00</span>
+          <span>14:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>15:00</span>
+          <span>15:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>16:00</span>
+          <span>16:00:00</span>
         </div>
       </div>
       <div class="line-x-content">
         <div class="line-x">
-          <span>17:00</span>
+          <span>17:00:00</span>
         </div>
       </div>
     </div>
@@ -91,18 +91,15 @@
           <div
             class="time-line"
             :class="{ even: index2 % 2 == 1 }"
-            @contextmenu.prevent="editLine($event, colItem, rowItem)"
             @mouseup="udown"
             @mousedown="moveContent($event, rowItem, index1, index2)"
             @contextmenu.prevent.stop="() => {}"
           >
             <div class="line-remark">{{ rowItem.remark }}</div>
             <div class="start-time">
-              {{ rowItem.pre_package_time.slice(10, 16) }}
+              {{ rowItem.pre_package_time.slice(10) }}
             </div>
-            <div class="end-time">
-              {{ rowItem.pre_release_time.slice(10, 16) }}
-            </div>
+            <div class="end-time">{{ rowItem.pre_release_time.slice(10) }}</div>
           </div>
           <div
             v-show="currentItemIndex === index1 + '_' + index2"
@@ -125,18 +122,6 @@
       <el-link type="primary" @click="addTaskLine">增加进度</el-link><br />
       <el-link type="primary" @click="removeTaskRow">删除任务</el-link><br />
     </div>
-
-    <div
-      v-show="editLineShow"
-      class="edit-line-poppover"
-      :style="{
-        top: `${contextmenuTop + 5}px`,
-        left: `${contextmenuLeft + 5}px`,
-      }"
-    >
-      <el-link type="primary" @click="removeTaskLine">删除进度</el-link><br />
-    </div>
-
     <daily-task-detail
       ref="DailyTaskDetail"
       :daily="daily"
@@ -154,7 +139,7 @@
 // 2. 元素的位置为left : release - (time :09:00:00) / timeLength;
 
 import { format } from "@/utils/utils.js";
-import DailyTaskDetail from "../AxisDialog/DailyTaskDetail.vue";
+import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
 
 import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
 
@@ -210,35 +195,18 @@ export default {
       exTime: (60 * 60 * 1000) / 2, //任务的最小时间差
       chartsdata: [
         {
-          product: "今天的第一个任务",
+          product:
+            "今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务",
           list: [
-            {
-              pre_package_time: this.daily + " 9:00:00",
-              pre_release_time: this.daily + " 10:00:00",
-              id: 3,
-              remark: "优化过滤器\n增加历史对比",
-            },
-            {
-              pre_package_time: this.daily + " 10:30:00",
-              pre_release_time: this.daily + " 11:30:00",
-              id: 4,
-              remark: "",
-            },
-            {
-              pre_package_time: this.daily + " 13:30:00",
-              pre_release_time: this.daily + " 17:30:00",
-              id: 5,
-              remark: "xxxx Test",
-            },
+            
           ],
         },
         {
           product: "今天的第二个任务",
           list: [
             {
-              pre_package_time: this.daily + " 9:30:00",
+              pre_package_time: this.daily + " 09:30:00",
               pre_release_time: this.daily + " 18:00:00",
-              id: 5,
               remark: "修复xxxx bug",
             },
           ],
@@ -251,8 +219,6 @@ export default {
       editTaskRowShow: false,
       currentSelectTimeList: [],
       addLineToIndex: 0,
-
-      editLineShow: false,
     };
   },
   mounted() {
@@ -283,7 +249,6 @@ export default {
       this.currentTask = data;
       this.currentTaskIndex = index;
       this.editTaskRowShow = false;
-      this.editLineShow = false;
     },
 
     editRowTask(event, data, index) {
@@ -293,7 +258,6 @@ export default {
         event.clientY - this.$refs.lineComponent.getBoundingClientRect().top;
       this.contextmenuLeft = event.clientX - 300;
       this.editTaskRowShow = true;
-      this.editLineShow = false;
     },
 
     showEditLineDialog() {
@@ -328,13 +292,11 @@ export default {
     },
 
     addTaskLimit(time) {
-      console.log(this.ableSelectTimeList);
       let arr = [];
       for (let i = 0; i < this.ableSelectTimeList.length; i++) {
         let st = new Date(this.ableSelectTimeList[i][0]).getTime();
         let et = new Date(this.ableSelectTimeList[i][1]).getTime();
         if (time >= st && time + this.exTime <= et) {
-          console.log(11111);
           this.addLineToIndex = i;
           arr[0] = time;
           arr[1] = time + this.exTime;
@@ -349,29 +311,21 @@ export default {
     },
 
     addLineToCurrentTask(data) {
-      console.log(this.addLineToIndex);
       this.currentTask.list.splice(this.addLineToIndex, 0, data);
     },
 
     //编辑进度
-    editLine(event, colItem, rowItem) {
-      // let { pre_package_time, pre_release_time, remark } = data;
-      // this.rowItemData = data;
-      // this.$set(this.rowItemData, "pre_package_time", pre_package_time);
-      // this.$set(this.rowItemData, "pre_release_time", pre_release_time);
-      // this.$set(this.rowItemData, "remark", remark);
-      // console.log(data, this.currentTask, this.rowItemData, event);
-      this.editLineShow = true;
+    editLine(event, data) {
+      let { pre_package_time, pre_release_time, remark } = data;
+      this.rowItemData = data;
+      this.$set(this.rowItemData, "pre_package_time", pre_package_time);
+      this.$set(this.rowItemData, "pre_release_time", pre_release_time);
+      this.$set(this.rowItemData, "remark", remark);
+      console.log(data, this.currentTask, this.rowItemData, event);
+      //this.editLineShow = true;
       this.contextmenuTop =
         event.clientY - this.$refs.lineComponent.getBoundingClientRect().top;
       this.contextmenuLeft = event.clientX - 300;
-      this.currentTask = colItem;
-    },
-
-    removeTaskLine() {
-      console.log()
-      this.currentTask.list.splice(this.index_2, 1)
-      this.editLineShow = false;
     },
 
     addTask(task) {

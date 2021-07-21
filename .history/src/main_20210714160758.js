@@ -81,8 +81,6 @@ import {
   Notification
 } from 'element-ui';
 
-import router from './router/index';
-
 let elementComponent = {
   Pagination,
   Dialog,
@@ -176,5 +174,4 @@ Vue.config.productionTip = false
 
 new Vue({
   render: h => h(App),
-  router,
 }).$mount('#app')

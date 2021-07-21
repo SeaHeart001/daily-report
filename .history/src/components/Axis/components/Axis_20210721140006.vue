@@ -154,7 +154,7 @@
 // 2. 元素的位置为left : release - (time :09:00:00) / timeLength;
 
 import { format } from "@/utils/utils.js";
-import DailyTaskDetail from "../AxisDialog/DailyTaskDetail.vue";
+import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
 
 import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
 

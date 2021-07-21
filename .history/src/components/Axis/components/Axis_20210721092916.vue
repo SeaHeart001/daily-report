@@ -64,6 +64,7 @@
         :key="index1"
         :class="{ active: currentTaskIndex === index1 }"
         @click="selectCurrentTask(colItem, index1)"
+        @contextmenu.prevent="editRowTask($event, colItem, index1)"
       >
         <div class="line-y">
           <div
@@ -86,12 +87,13 @@
             class="left"
             @mousedown="dirEleClick($event, rowItem, index1, index2, -1)"
           ></div>
-          <!-- @contextmenu.prevent="editLine($event, rowItem)" -->
+          <!-- @contextmenu.prevent="editLine($event, rowItem)" editRowTask-->
           <div
             class="time-line"
-            @contextmenu.prevent="editLine($event, rowItem)"
+            :class="{ even: index2 % 2 == 1 }"
             @mouseup="udown"
             @mousedown="moveContent($event, rowItem, index1, index2)"
+            @contextmenu.prevent.stop="() => {}"
           >
             <div class="line-remark">{{ rowItem.remark }}</div>
             <div class="start-time">
@@ -110,15 +112,25 @@
     </div>
 
     <div
-      v-show="editLineShow"
+      v-show="editTaskRowShow"
       class="edit-line-poppover"
       :style="{
         top: `${contextmenuTop + 5}px`,
         left: `${contextmenuLeft + 5}px`,
       }"
     >
-      <el-link type="primary">详情</el-link><br />
+      <el-link type="primary" @click="addTaskLine">增加进度</el-link><br />
+      <el-link type="primary" @click="removeTaskRow">删除任务</el-link><br />
     </div>
+    <daily-task-detail
+      ref="DailyTaskDetail"
+      :daily="daily"
+      :chartsdata="chartsdata"
+    ></daily-task-detail>
+    <add-time-line-remark
+      @addLineToCurrentTask="addLineToCurrentTask"
+      ref="AddTimeLineRemark"
+    ></add-time-line-remark>
   </div>
 </template>
 
@@ -127,6 +139,10 @@
 // 2. 元素的位置为left : release - (time :09:00:00) / timeLength;
 
 import { format } from "@/utils/utils.js";
+import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
+
+import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
+
 // const time = new Date().toISOString().slice(0, 10);
 const timeLength = 9 * 60 * 60 * 1000; //总时长的毫秒数S
 const errorTime = 1000 * 60; //由于js小数位的计算误差，暂设1分钟的时间处理误差
@@ -139,8 +155,32 @@ export default {
       default: format(new Date().getTime(), "YYYY-MM-DD"),
     },
   },
+  components: {
+    DailyTaskDetail,
+    AddTimeLineRemark,
+  },
   watch: {
-    daily(value) {},
+    daily(value) {
+      //console.log(value, 'dayli');
+      if (this.chartsdata.length === 0) {
+        return;
+      }
+      let reg = /(\d{4})-(\d{2})-(\d{2})/;
+      for (let i = 0; i < this.chartsdata.length; i++) {
+        let chartsList = this.chartsdata[i].list;
+        //console.log(chartsList);
+        chartsList.forEach((item) => {
+          item.pre_package_time = item.pre_package_time.replace(
+            reg,
+            this.daily
+          );
+          item.pre_release_time = item.pre_release_time.replace(
+            reg,
+            this.daily
+          );
+        });
+      }
+    },
   },
   data() {
     return {
@@ -152,24 +192,20 @@ export default {
       index_1: 0,
       index_2: 0,
       directive: 0,
+      exTime: (60 * 60 * 1000) / 2, //任务的最小时间差
       chartsdata: [
         {
           product:
             "今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务今天的第一个任务",
           list: [
-            {
-              pre_package_time: this.daily + " 9:00:00",
-              pre_release_time: this.daily + " 10:00:00",
-              remark:
-                "优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比优化过滤器增加历史对比",
-            },
+            
           ],
         },
         {
           product: "今天的第二个任务",
           list: [
             {
-              pre_package_time: this.daily + " 9:30:00",
+              pre_package_time: this.daily + " 09:30:00",
               pre_release_time: this.daily + " 18:00:00",
               remark: "修复xxxx bug",
             },
@@ -180,23 +216,106 @@ export default {
       currentTaskIndex: -1,
       contextmenuTop: 0,
       contextmenuLeft: 0,
-      editLineShow: false,
+      editTaskRowShow: false,
+      currentSelectTimeList: [],
+      addLineToIndex: 0,
     };
   },
   mounted() {
     this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
-    console.log(this.lineComponentWidth, 123);
+    setTimeout(() => {
+      //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
+      this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
+    }, 300);
+
     window.onresize = () => {
       this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
     };
   },
+  computed: {
+    ableSelectTimeList() {
+      let arr = this.currentSelectTimeList.filter((item1, index) => {
+        return index % 2 == 0;
+      });
+      return arr;
+    },
+  },
   methods: {
+    openTaskDetail() {
+      this.$refs.DailyTaskDetail.open();
+    },
+
     selectCurrentTask(data, index) {
       this.currentTask = data;
       this.currentTaskIndex = index;
-      this.editLineShow = false;
+      this.editTaskRowShow = false;
     },
 
+    editRowTask(event, data, index) {
+      this.currentTask = data;
+      this.currentTaskIndex = index;
+      this.contextmenuTop =
+        event.clientY - this.$refs.lineComponent.getBoundingClientRect().top;
+      this.contextmenuLeft = event.clientX - 300;
+      this.editTaskRowShow = true;
+    },
+
+    showEditLineDialog() {
+      this.editTaskRowShow = false;
+    },
+
+    removeTaskRow() {
+      this.editTaskRowShow = false;
+      this.chartsdata.splice(this.currentTaskIndex, 1);
+    },
+
+    //增加进度
+    addTaskLine() {
+      let arr = [];
+      this.currentSelectTimeList = [];
+      arr.push(this.daily + " 09:00:00");
+      for (let i = 0; i < this.currentTask.list.length; i++) {
+        arr.push(this.currentTask.list[i].pre_package_time);
+        arr.push(this.currentTask.list[i].pre_release_time);
+      }
+      arr.push(this.daily + " 18:00:00");
+      for (let j = 0; j < arr.length - 1; j++) {
+        this.currentSelectTimeList.push([arr[j], arr[j + 1]]);
+      }
+      this.editTaskRowShow = false;
+      let time =
+        Math.floor(
+          (this.contextmenuLeft / this.lineComponentWidth) * timeLength
+        ) + new Date(this.daily + " 09:00:00").getTime();
+      console.log(time);
+      this.addTaskLimit(time);
+    },
+
+    addTaskLimit(time) {
+      let arr = [];
+      for (let i = 0; i < this.ableSelectTimeList.length; i++) {
+        let st = new Date(this.ableSelectTimeList[i][0]).getTime();
+        let et = new Date(this.ableSelectTimeList[i][1]).getTime();
+        if (time >= st && time + this.exTime <= et) {
+          this.addLineToIndex = i;
+          arr[0] = time;
+          arr[1] = time + this.exTime;
+          break;
+        }
+      }
+      if (arr.length) {
+        this.$refs.AddTimeLineRemark.show(arr);
+      } else {
+        this.$message.error("请合理安排时间");
+      }
+    },
+
+    addLineToCurrentTask(data) {
+      console.log(this.addLineToIndex);
+      this.currentTask.list.splice(this.addLineToIndex, 0, data);
+    },
+
+    //编辑进度
     editLine(event, data) {
       let { pre_package_time, pre_release_time, remark } = data;
       this.rowItemData = data;
@@ -204,29 +323,28 @@ export default {
       this.$set(this.rowItemData, "pre_release_time", pre_release_time);
       this.$set(this.rowItemData, "remark", remark);
       console.log(data, this.currentTask, this.rowItemData, event);
-      this.editLineShow = true;
+      //this.editLineShow = true;
       this.contextmenuTop =
         event.clientY - this.$refs.lineComponent.getBoundingClientRect().top;
       this.contextmenuLeft = event.clientX - 300;
     },
 
-    showEditLineDialog() {
-      this.editLineShow = false;
-    },
-
     addTask(task) {
       this.chartsdata.push(task);
       setTimeout(() => {
-        //滚动条出现时需要重新计算宽度，暂没有找到合适方式监视滚动条消失出现
+        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
         this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
       }, 300);
     },
 
-    //js交互
     selectCurrentIndex(index1, index2) {
       this.currentItemIndex = index1 + "_" + index2;
-      this.editLineShow = false;
+      this.index_1 = index1;
+      this.index_2 = index2;
+      this.editTaskRowShow = false;
     },
+
+    //元素移动碰撞边界
 
     lineContentStyle(item) {
       let width =
@@ -240,7 +358,7 @@ export default {
       let left =
         Math.floor(
           ((new Date(item.pre_package_time) -
-            new Date(this.daily + " :9:00:00")) *
+            new Date(this.daily + " 09:00:00")) *
             this.lineComponentWidth) /
             timeLength
         ) + "px";
@@ -318,14 +436,14 @@ export default {
       let data = this.chartsdata[this.index_1].list;
       let compareIndex = this.index_2 + this.directive;
       let maxIndex = this.chartsdata[this.index_1].list.length - 1;
-      let exTime = (60 * 60 * 1000) / 2; //这里可以设置最小时间半小时60*60*1000/2
+      let exTime = this.exTime; //这里可以设置最小时间半小时60*60*1000/2
 
       if (this.directive < 0) {
         lint2 =
           new Date(data[this.index_2].pre_release_time).getTime() - exTime;
 
         if (compareIndex < 0) {
-          lint1 = new Date(this.daily + " 9:00:00").getTime();
+          lint1 = new Date(this.daily + " 09:00:00").getTime();
         } else {
           lint1 = new Date(data[compareIndex].pre_release_time).getTime();
         }
@@ -385,7 +503,7 @@ export default {
       let pre_package_time = new Date(data.pre_package_time).getTime();
       let pre_release_time = new Date(data.pre_release_time).getTime();
       if (prevIndex < 0) {
-        prevLint = new Date(this.daily + " 9:00:00").getTime();
+        prevLint = new Date(this.daily + " 09:00:00").getTime();
       } else {
         prevLint = new Date(compareData[prevIndex].pre_release_time).getTime();
       }
@@ -475,6 +593,7 @@ export default {
       padding: 10px;
       text-align: left;
       font-size: 14px;
+      pointer-events: none;
     }
 
     &.active {
@@ -506,6 +625,12 @@ export default {
           position: absolute;
           top: 30px;
           pointer-events: none;
+        }
+
+        &.even {
+          .start-time, .end-time {
+            top: -15px;
+          }
         }
 
         .start-time {

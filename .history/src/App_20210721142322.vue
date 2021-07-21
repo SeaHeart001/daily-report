@@ -5,10 +5,13 @@
 </template>
 
 <script>
-
+import AxisIndex from './components/Axis'
 
 export default {
   name: 'App',
+  components: {
+    AxisIndex
+  }
 }
 </script>
 

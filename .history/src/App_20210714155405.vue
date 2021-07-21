@@ -1,14 +1,17 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <AxisIndex msg="Welcome to Your Vue.js App"/>
   </div>
 </template>
 
 <script>
-
+import AxisIndex from './components/Axis'
 
 export default {
   name: 'App',
+  components: {
+    AxisIndex
+  }
 }
 </script>
 

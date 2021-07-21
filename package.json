@@ -12,7 +12,8 @@
     "echarts": "^4.2.1",
     "element-ui": "^2.15.3",
     "style-resources-loader": "^1.4.1",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-router": "^3.5.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.5.0",

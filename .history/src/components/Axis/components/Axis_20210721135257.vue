@@ -91,7 +91,7 @@
           <div
             class="time-line"
             :class="{ even: index2 % 2 == 1 }"
-            @contextmenu.prevent="editLine($event, colItem, rowItem)"
+            @contextmenu.prevent="editLine($event, rowItem)"
             @mouseup="udown"
             @mousedown="moveContent($event, rowItem, index1, index2)"
             @contextmenu.prevent.stop="() => {}"
@@ -154,7 +154,7 @@
 // 2. 元素的位置为left : release - (time :09:00:00) / timeLength;
 
 import { format } from "@/utils/utils.js";
-import DailyTaskDetail from "../AxisDialog/DailyTaskDetail.vue";
+import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
 
 import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
 
@@ -210,7 +210,7 @@ export default {
       exTime: (60 * 60 * 1000) / 2, //任务的最小时间差
       chartsdata: [
         {
-          product: "今天的第一个任务",
+          product: "1.0",
           list: [
             {
               pre_package_time: this.daily + " 9:00:00",
@@ -233,7 +233,7 @@ export default {
           ],
         },
         {
-          product: "今天的第二个任务",
+          product: "2.0",
           list: [
             {
               pre_package_time: this.daily + " 9:30:00",
@@ -283,7 +283,6 @@ export default {
       this.currentTask = data;
       this.currentTaskIndex = index;
       this.editTaskRowShow = false;
-      this.editLineShow = false;
     },
 
     editRowTask(event, data, index) {
@@ -354,7 +353,7 @@ export default {
     },
 
     //编辑进度
-    editLine(event, colItem, rowItem) {
+    editLine(event, data) {
       // let { pre_package_time, pre_release_time, remark } = data;
       // this.rowItemData = data;
       // this.$set(this.rowItemData, "pre_package_time", pre_package_time);
@@ -365,12 +364,9 @@ export default {
       this.contextmenuTop =
         event.clientY - this.$refs.lineComponent.getBoundingClientRect().top;
       this.contextmenuLeft = event.clientX - 300;
-      this.currentTask = colItem;
     },
 
     removeTaskLine() {
-      console.log()
-      this.currentTask.list.splice(this.index_2, 1)
       this.editLineShow = false;
     },
 

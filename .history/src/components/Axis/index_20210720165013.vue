@@ -72,7 +72,7 @@
       </el-form>
 
       <span slot="footer" class="dialog-footer">
-        <el-button @click="handleClose()">取 消</el-button>
+        <el-button @click="handleClose">取 消</el-button>
         <el-button type="primary" @click="saveForm()">确 定</el-button>
       </span>
     </el-dialog>

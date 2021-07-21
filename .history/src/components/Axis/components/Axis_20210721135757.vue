@@ -154,7 +154,7 @@
 // 2. 元素的位置为left : release - (time :09:00:00) / timeLength;
 
 import { format } from "@/utils/utils.js";
-import DailyTaskDetail from "../AxisDialog/DailyTaskDetail.vue";
+import DailyTaskDetail from "../../AxisDialog/DailyTaskDetail.vue";
 
 import AddTimeLineRemark from "../TimeSelect/AddTimeLineRemark.vue";
 
@@ -210,7 +210,7 @@ export default {
       exTime: (60 * 60 * 1000) / 2, //任务的最小时间差
       chartsdata: [
         {
-          product: "今天的第一个任务",
+          product: "1.0",
           list: [
             {
               pre_package_time: this.daily + " 9:00:00",
@@ -233,7 +233,7 @@ export default {
           ],
         },
         {
-          product: "今天的第二个任务",
+          product: "2.0",
           list: [
             {
               pre_package_time: this.daily + " 9:30:00",
