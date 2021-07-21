@@ -289,16 +289,7 @@ export default {
       this.editLineShow = false;
     },
 
-    //增加任务
-    addTask(task) {
-      this.chartsdata.push(task);
-      setTimeout(() => {
-        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
-        this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
-      }, 300);
-    },
-
-    //编辑任务(暂只支持删除)
+    //编辑任务
     editRowTask(event, data, index) {
       this.currentTask = data;
       this.currentTaskIndex = index;
@@ -368,7 +359,7 @@ export default {
 
     /* 增加进度END */
 
-    //编辑进度(暂只支持删除)
+    //编辑进度
     editLine(event, colItem, rowItem) {
       // let { pre_package_time, pre_release_time, remark } = data;
       // this.rowItemData = data;
@@ -388,7 +379,14 @@ export default {
       this.editLineShow = false;
     },
 
-    
+    //增加任务
+    addTask(task) {
+      this.chartsdata.push(task);
+      setTimeout(() => {
+        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
+        this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
+      }, 300);
+    },
 
     //点击选择当前进度
     selectCurrentIndex(index1, index2) {

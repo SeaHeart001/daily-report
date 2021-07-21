@@ -117,15 +117,6 @@ export default {
     };
   },
 
-  watch: {
-    '$route': {
-      deep: true,
-      handler(newValue, oldValue){
-        console.log(newValue, oldValue)
-      }
-    }
-  },
-
   mounted(){
     console.log(this.$route.params)
   },

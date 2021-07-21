@@ -20,12 +20,7 @@ export default new VueRouter({
         },
         {
             name: 'Axis',
-            path: '/Axis',
-            component: Axis
-        },
-        {
-            name: 'AxisDetial',
-            path: '/Axis/:id',
+            path: '/axis',
             component: Axis
         }
     ]

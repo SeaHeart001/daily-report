@@ -85,7 +85,6 @@
             v-show="currentItemIndex === index1 + '_' + index2"
             name="mouse-event-target"
             class="left"
-            @contextmenu.prevent.stop="() => {}"
             @mousedown="dirEleClick($event, rowItem, index1, index2, -1)"
           ></div>
           <!-- @contextmenu.prevent="editLine($event, rowItem)" editRowTask-->
@@ -109,7 +108,6 @@
             v-show="currentItemIndex === index1 + '_' + index2"
             name="mouse-event-target"
             class="right"
-            @contextmenu.prevent.stop="() => {}"
             @mousedown="dirEleClick($event, rowItem, index1, index2, 1)"
           ></div>
         </div>
@@ -215,7 +213,7 @@ export default {
           product: "今天的第一个任务",
           list: [
             {
-              pre_package_time: this.daily + " 09:00:00",
+              pre_package_time: this.daily + " 9:00:00",
               pre_release_time: this.daily + " 10:00:00",
               id: 3,
               remark: "优化过滤器\n增加历史对比",
@@ -238,7 +236,7 @@ export default {
           product: "今天的第二个任务",
           list: [
             {
-              pre_package_time: this.daily + " 09:30:00",
+              pre_package_time: this.daily + " 9:30:00",
               pre_release_time: this.daily + " 18:00:00",
               id: 5,
               remark: "修复xxxx bug",
@@ -267,6 +265,7 @@ export default {
     window.onresize = () => {
       this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
     };
+    console.log(this.$route)
   },
   computed: {
     ableSelectTimeList() {
@@ -281,7 +280,6 @@ export default {
       this.$refs.DailyTaskDetail.open();
     },
 
-    //点击选择当前任务
     selectCurrentTask(data, index) {
       this.currentTask = data;
       this.currentTaskIndex = index;
@@ -289,16 +287,6 @@ export default {
       this.editLineShow = false;
     },
 
-    //增加任务
-    addTask(task) {
-      this.chartsdata.push(task);
-      setTimeout(() => {
-        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
-        this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
-      }, 300);
-    },
-
-    //编辑任务(暂只支持删除)
     editRowTask(event, data, index) {
       this.currentTask = data;
       this.currentTaskIndex = index;
@@ -308,17 +296,17 @@ export default {
       this.editTaskRowShow = true;
       this.editLineShow = false;
     },
-    //删除进度
+
+    showEditLineDialog() {
+      this.editTaskRowShow = false;
+    },
+
     removeTaskRow() {
       this.editTaskRowShow = false;
       this.chartsdata.splice(this.currentTaskIndex, 1);
     },
 
-    // showEditLineDialog() {
-    //   this.editTaskRowShow = false;
-    // },
-
-    /* 增加进度STSRT */
+    //增加进度
     addTaskLine() {
       let arr = [];
       this.currentSelectTimeList = [];
@@ -366,9 +354,7 @@ export default {
       this.currentTask.list.splice(this.addLineToIndex, 0, data);
     },
 
-    /* 增加进度END */
-
-    //编辑进度(暂只支持删除)
+    //编辑进度
     editLine(event, colItem, rowItem) {
       // let { pre_package_time, pre_release_time, remark } = data;
       // this.rowItemData = data;
@@ -382,15 +368,21 @@ export default {
       this.contextmenuLeft = event.clientX - 300;
       this.currentTask = colItem;
     },
-    //删除进度
+
     removeTaskLine() {
+      console.log()
       this.currentTask.list.splice(this.index_2, 1)
       this.editLineShow = false;
     },
 
-    
+    addTask(task) {
+      this.chartsdata.push(task);
+      setTimeout(() => {
+        //滚动条出现时需要重新计算宽度，暂没有找到更合适方式监视滚动条消失出现
+        this.lineComponentWidth = this.$refs.lineComponent.offsetWidth;
+      }, 300);
+    },
 
-    //点击选择当前进度
     selectCurrentIndex(index1, index2) {
       this.currentItemIndex = index1 + "_" + index2;
       this.index_1 = index1;
